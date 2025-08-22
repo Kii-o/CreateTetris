@@ -21,8 +21,8 @@ const std::array<sf::Color, 7> PIECE_COLORS = {
     sf::Color::Red,         // Z = 赤
     sf::Color::Cyan,        // I = 水色
     sf::Color::Yellow,      // O = 黄色
-    sf::Color::Blue,        // J = 青
-    sf::Color(255,165,0)    // L = オレンジ
+    sf::Color::Blue,        // L = オレンジ
+    sf::Color(255,165,0)    // J = 青
 };
 
 // ==================== Piece クラス ==================== 
