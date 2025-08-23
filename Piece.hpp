@@ -4,6 +4,31 @@
 #include <array> 
 #include <deque> 
 #include <random> 
+#include <optional>
+
+// 列挙型 (enum) = 限られた選択肢を名前付きで表す型
+//enum classとすることで、Tではなく、PieceType::Tと必ず型を指定して使うようになり、安全性が上がる
+
+//sf::について
+//sfとは、SFMLライブラリの名前空間のこと
+//sf::colorで色を扱うクラス、sf::RenderWindowでゲーム画面を描画するウィンドウ、sf::Vector2iで2次元の整数ベクトル(x,y)など
+//sf::Color c = sf::Color::Redで赤色、sf::Vector2i v(1, 2)でx=1, y = 2
+
+//stdについて
+//stdはCpp標準ライブラリの名前空間のこと
+//std::arrayで固定長配列、std::coutで出力など
+
+//externについて
+//externはここでは宣言だけで、実態はcppファイルにあるという意味
+//今回はミノの相対座標と色の宣言で使用
+
+//std::dequeについて
+// dequeはCpp標準ライブラリ(Double Ended QUEue、両端キューのこと)
+//今回は、PieceTypeが格納されている
+//そのため、nexeQUeueではNextに表示するテトリミノの種類を保持するための両端キュー
+//dequeには、push_front(先頭に要素を追加)やpop_back(末尾の要素を削除)等の関数がある
+//テトリスのNext表示は、先頭から取り出して (pop_front())、末尾に新しいピースを補充 (push_back()) する処理で表現できる
+
 
 // ==== ピースの種類（7種のテトリミノ） ====
 enum class PieceType { T, S, Z, I, O, J, L };
@@ -51,14 +76,14 @@ private:
     Bag bag;                                 // 7種1巡の袋
     Piece currentPiece;                      // 現在操作中のピース
     std::deque<PieceType> nextQueue;         // Next表示用のキュー（複数個分）
-    PieceType holdPiece;                     // Holdに入っているピース
+    std::optional<Piece> holdPiece;          // Holdに入っているピース
     bool holdUsed = false, holdExists = false; // Holdを使ったかどうか、存在するか
 
     sf::Clock fallClock, moveClock;          // 自動落下タイマー、横移動タイマー
     float fallInterval = 0.5f;               // 自動落下の間隔（秒）
     float moveInterval = 0.15f;              // 横移動の連続入力の間隔（秒）
 
-    PieceType holdPieceType; // Hold中のピースの種類
+    PieceType holdPieceType;                 // Hold中のピースの種類
 
     sf::Font font;                           // GUI用フォント（スコアやNext表示に利用）
 
