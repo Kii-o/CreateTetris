@@ -169,27 +169,45 @@ void Game::handleInput() {
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::X))
         currentPiece.rotate(board, true);  // 右回転
 
-    // --- Hold機能 ---
+    // --- Hold機能 --- 
+// Cキーが押されていて、まだこのターンでHoldを使っていない場合のみ処理
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::C) && !holdUsed) {
-    if (!holdExists) {
-        // 初回ホールド: 現在のピースの種類を保存
-        holdPieceType = currentPiece.type;
-        holdExists = true;
-        currentPiece = Piece(nextQueue.front());
-        nextQueue.pop_front();
-        nextQueue.push_back(bag.getNext());
-    } else {
-        // 入れ替え
-        std::swap(currentPiece.type, holdPieceType);
-        currentPiece = Piece(currentPiece.type); // Pieceオブジェクトを再生成
+        if (!holdExists) {
+            // === 初回ホールド ===
+            // 現在のピースの種類をhold用変数に保存
+            holdPiece = currentPiece;
+            holdPieceType = currentPiece.type;
+            // holdにピースが存在することを記録
+            holdExists = true;
+            // 現在のピースを「Nextキューの先頭のピース」に置き換える
+            currentPiece = Piece(nextQueue.front());
+            // Nextキューの先頭を削除（消費したので）
+            nextQueue.pop_front();
+            // 新しくbagから1つ取り出してNextキューの末尾に追加
+            nextQueue.push_back(bag.getNext());
+        }
+        else {
+            // === 2回目以降のHold ===
+            // 現在のピースの種類を一時的に保存
+            Piece temppiece = currentPiece;
+            PieceType temptype = currentPiece.type;
+            // 一時保存しておいた種類をholdに戻す（入れ替え完了）
+            holdPiece = temppiece;
+            holdPieceType = temptype;
+            // hold中のピースを現在のピースとして生成し直す
+            currentPiece = Piece(holdPieceType);
+        }
+
+        // 新しく取り出した/入れ替えたピースを初期位置(左上からx=3,y=0)に配置
+        currentPiece.x = 3;
+        currentPiece.y = 0;
+        // このターンではもうHoldを使えないようにフラグを立てる
+        holdUsed = true;
     }
 
-    currentPiece.x = 3;
-    currentPiece.y = 0;
-    holdUsed = true;
-}
-
+    // 移動入力のタイマーをリセット（Cを押した直後に再度連続入力されないようにする）
     moveClock.restart();
+
 }
 
 
@@ -228,8 +246,8 @@ void Game::render() {
     }
 
     // --- Holdの表示 ---
-    if (holdExists) {
-        Piece p(holdPiece);
+    if (holdPiece) {  // has_value() の糖衣構文
+        Piece p(*holdPiece);  // *で中身を取り出す
         p.drawPreview(window, px, 600);
     }
 
