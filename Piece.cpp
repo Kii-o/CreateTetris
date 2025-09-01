@@ -115,18 +115,26 @@ void Piece::move(int dx, int dy) {
     y += dy;
 }
 
+// ------------------- 回転用 enum -------------------
+// 追加: 回転状態を保持する enum
+enum class Rotation { R0, R90, R180, R270 };
+
+// Piece クラスに rotation メンバを追加する必要があります
+// 例: piece.hpp 内の Piece クラスに:
+// Rotation rotation = Rotation::R0; // 初期は0度
+
+// ==================== rotate 関数改訂 ==================== 
 void Piece::rotate(Board& board, bool clockwise) {
-    std::array<sf::Vector2i, 4> oldBlocks = blocks;
+    std::array<sf::Vector2i, 4> oldBlocks = blocks; // 元の形状を保存
     Rotation oldRotation = rotation;
 
-    // 回転
+    // ---- 回転行列適用 ----
     for (auto& b : blocks) {
         int tmp = b.x;
         if (clockwise) {
             b.x = -b.y;
             b.y = tmp;
-        }
-        else {
+        } else {
             b.x = b.y;
             b.y = -tmp;
         }
@@ -135,10 +143,19 @@ void Piece::rotate(Board& board, bool clockwise) {
     // 次の回転状態を計算
     rotation = static_cast<Rotation>((static_cast<int>(rotation) + (clockwise ? 1 : 3)) % 4);
 
-    // ウォールキック適用
+    // ---- ウォールキック適用 ----
     const auto& kicks = (type == PieceType::I) ? WALL_KICKS_I : WALL_KICKS;
     bool moved = false;
-    for (const auto& offset : kicks[static_cast<int>(oldRotation)]) {
+
+    // キックテーブルのインデックス計算
+    int kickIndex = 0;
+    if (clockwise) {
+        kickIndex = static_cast<int>(oldRotation) * 2; // 右回転
+    } else {
+        kickIndex = static_cast<int>(oldRotation) * 2 + 1; // 左回転
+    }
+
+    for (const auto& offset : kicks[kickIndex]) {
         if (canMove(board, offset.x, offset.y)) {
             x += offset.x;
             y += offset.y;
@@ -154,6 +171,9 @@ void Piece::rotate(Board& board, bool clockwise) {
     }
 }
 
+// ========================================
+// ここまでで I / T/J/L/S/Z 全ての SRS 回転＆キックが適用可能
+// ========================================
 
 
 // ピースを盤面に固定
