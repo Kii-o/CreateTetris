@@ -31,7 +31,9 @@
 
 
 // ==== ピースの種類（7種のテトリミノ） ====
-enum class PieceType { T, S, Z, I, O, J, L };
+enum class PieceType { T, S, Z, I, O, L, J };
+// 回転状態
+enum class Rotation { Spawn = 0, Right = 1, Reverse = 2, Left = 3 };
 
 // ==== ピース形状と色の定義（実体は .cpp 側で定義） ====
 // それぞれのミノの4マス分の相対座標
@@ -43,6 +45,7 @@ extern const std::array<sf::Color, 7> PIECE_COLORS;
 class Piece {
 public:
     PieceType type;                          // 自分の種類を覚える(Holdで使用する)
+    Rotation rotation = Rotation::Spawn;
     sf::Color color;                         // このピースの色
     std::array<sf::Vector2i, 4> blocks;      // 4つのブロックの相対座標
     int x = 3, y = 0;                        // フィールド上での位置（左上が基準）
@@ -50,6 +53,7 @@ public:
     Piece(PieceType type);                   // コンストラクタ（種類を指定して生成）
     void draw(sf::RenderWindow& window);     // フィールド上に描画
     void drawPreview(sf::RenderWindow& window, int px, int py, int size = 20); // NextやHoldの小さな表示用
+    std::array<sf::Vector2i, 4> getAbsolutePositions() const; //現在のブロックの座標を取得する
     bool canMove(Board& board, int dx, int dy); // 指定方向に動けるか判定
     void move(int dx, int dy);               // 実際に移動する
     // 右回転なら clockwise = true、左回転なら false
