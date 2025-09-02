@@ -39,34 +39,14 @@ std::string toString(PieceType t) {
     }
 }
 
-// ------------------- ウォールキックテーブル -------------------
-// T, J, L, S, Z 用
-const std::array<std::array<sf::Vector2i, 5>, 8> WALL_KICKS = { {
-    {{ {0,0}, {-1,0}, {-1,1}, {0,-2}, {-1,-2} }}, // 0->R
-    {{ {0,0}, {1,0}, {1,-1}, {0,2}, {1,2} }},     // R->0
-    {{ {0,0}, {1,0}, {1,-1}, {0,2}, {1,2} }},     // R->2
-    {{ {0,0}, {-1,0}, {-1,1}, {0,-2}, {-1,-2} }},  // 2->R
-
-    {{ {0,0}, {1,0}, {1,1}, {0,-2}, {1,-2} }},      // 2->L
-    {{ {0,0}, {-1,0}, {-1,-1}, {0,2}, {-1,2} }},    // L->2
-    {{ {0,0}, {-1,0}, {-1,-1}, {0,2}, {-1,2} }},    // L->0
-    {{ {0,0}, {1,0}, {1,1}, {0,-2}, {1,-2} }}       // 0->L
-
-} };
-
-// Iミノ用
-const std::array<std::array<sf::Vector2i, 5>, 8> WALL_KICKS_I = { {
-    {{ {0,0}, {-2,0}, {1,0}, {-2,-1}, {1,2} }},      // 0->R
-    {{ {0,0}, {2,0}, {-1,0}, {2,1}, {-1,-2} }},      // R->0
-    {{ {0,0}, {-1,0}, {2,0}, {-1,2}, {2,-1} }},      // R->2
-    {{ {0,0}, {1,0}, {-2,1}, {1,-2}, {-2,1} }},      // 2->R
-
-    {{ {0,0}, {2,0}, {-1,0}, {2,1}, {-1,-2} }},      // 2->L
-    {{ {0,0}, {-2,0}, {1,0}, {-2,-1}, {1,2} }},      // L->2
-    {{ {0,0}, {1,0}, {-2,0}, {1,-2}, {-2,1} }},      // L->0
-    {{ {0,0}, {-1,0}, {2,0}, {-1,2}, {2,-1} }}        // 0->L
-} };
-
+// ピースの全ブロックの絶対座標を返す
+std::array<sf::Vector2i, 4> Piece::getAbsolutePositions() const {
+    std::array<sf::Vector2i, 4> abs;
+    for (int i = 0; i < 4; i++) {
+        abs[i] = { x + blocks[i].x, y + blocks[i].y };
+    }
+    return abs;
+}
 
 
 
@@ -115,26 +95,53 @@ void Piece::move(int dx, int dy) {
     y += dy;
 }
 
-// ------------------- 回転用 enum -------------------
-// 追加: 回転状態を保持する enum
-enum class Rotation { R0, R90, R180, R270 };
+// ------------------- ウォールキックテーブル -------------------
+// T, J, L, S, Z 用
+const std::array<std::array<sf::Vector2i, 5>, 8> WALL_KICKS = { {
+    {{ {0,0}, {-1,0}, {-1,1}, {0,-2}, {-1,-2} }}, // 0->R
+    {{ {0,0}, {1,0}, {1,-1}, {0,2}, {1,2} }},     // R->0
+    {{ {0,0}, {1,0}, {1,-1}, {0,2}, {1,2} }},     // R->2
+    {{ {0,0}, {-1,0}, {-1,1}, {0,-2}, {-1,-2} }},  // 2->R
 
-// Piece クラスに rotation メンバを追加する必要があります
-// 例: piece.hpp 内の Piece クラスに:
-// Rotation rotation = Rotation::R0; // 初期は0度
+    {{ {0,0}, {1,0}, {1,1}, {0,-2}, {1,-2} }},      // 2->L
+    {{ {0,0}, {-1,0}, {-1,-1}, {0,2}, {-1,2} }},    // L->2
+    {{ {0,0}, {-1,0}, {-1,-1}, {0,2}, {-1,2} }},    // L->0
+    {{ {0,0}, {1,0}, {1,1}, {0,-2}, {1,-2} }}       // 0->L
 
-// ==================== rotate 関数改訂 ==================== 
+} };
+
+// Iミノ用
+const std::array<std::array<sf::Vector2i, 5>, 8> WALL_KICKS_I = { {
+    {{ {0,0}, {-2,0}, {1,0}, {-2,-1}, {1,2} }},      // 0->R
+    {{ {0,0}, {2,0}, {-1,0}, {2,1}, {-1,-2} }},      // R->0
+    {{ {0,0}, {-1,0}, {2,0}, {-1,2}, {2,-1} }},      // R->2
+    {{ {0,0}, {1,0}, {-2,1}, {1,-2}, {-2,1} }},      // 2->R
+
+    {{ {0,0}, {2,0}, {-1,0}, {2,1}, {-1,-2} }},      // 2->L
+    {{ {0,0}, {-2,0}, {1,0}, {-2,-1}, {1,2} }},      // L->2
+    {{ {0,0}, {1,0}, {-2,0}, {1,-2}, {-2,1} }},      // L->0
+    {{ {0,0}, {-1,0}, {2,0}, {-1,2}, {2,-1} }}        // 0->L
+} };
+
 void Piece::rotate(Board& board, bool clockwise) {
-    std::array<sf::Vector2i, 4> oldBlocks = blocks; // 元の形状を保存
+    std::array<sf::Vector2i, 4> oldBlocks = blocks;
     Rotation oldRotation = rotation;
 
-    // ---- 回転行列適用 ----
+    // 回転前の絶対座標を出力
+    std::cout << "Before rotation: ";
+    for (auto& p : getAbsolutePositions()) {
+        std::cout << "(" << p.x << "," << p.y << ") ";
+    }
+    std::cout << std::endl;
+
+    // 回転
     for (auto& b : blocks) {
         int tmp = b.x;
         if (clockwise) {
             b.x = -b.y;
             b.y = tmp;
-        } else {
+        }
+        else {
             b.x = b.y;
             b.y = -tmp;
         }
@@ -143,19 +150,10 @@ void Piece::rotate(Board& board, bool clockwise) {
     // 次の回転状態を計算
     rotation = static_cast<Rotation>((static_cast<int>(rotation) + (clockwise ? 1 : 3)) % 4);
 
-    // ---- ウォールキック適用 ----
+    // ウォールキック適用
     const auto& kicks = (type == PieceType::I) ? WALL_KICKS_I : WALL_KICKS;
     bool moved = false;
-
-    // キックテーブルのインデックス計算
-    int kickIndex = 0;
-    if (clockwise) {
-        kickIndex = static_cast<int>(oldRotation) * 2; // 右回転
-    } else {
-        kickIndex = static_cast<int>(oldRotation) * 2 + 1; // 左回転
-    }
-
-    for (const auto& offset : kicks[kickIndex]) {
+    for (const auto& offset : kicks[static_cast<int>(oldRotation)]) {
         if (canMove(board, offset.x, offset.y)) {
             x += offset.x;
             y += offset.y;
@@ -169,11 +167,16 @@ void Piece::rotate(Board& board, bool clockwise) {
         blocks = oldBlocks;
         rotation = oldRotation;
     }
+
+    // 回転後の絶対座標を出力
+    std::cout << "After rotation: ";
+    for (auto& p : getAbsolutePositions()) {
+        std::cout << "(" << p.x << "," << p.y << ") ";
+    }
+    std::cout << std::endl;
 }
 
-// ========================================
-// ここまでで I / T/J/L/S/Z 全ての SRS 回転＆キックが適用可能
-// ========================================
+
 
 
 // ピースを盤面に固定
@@ -222,6 +225,18 @@ void Game::run() {
         handleInput();
         handleFall();
         render();
+
+        /*
+
+        // --- デバッグ出力 ---
+        auto abs = currentPiece.getAbsolutePositions();
+        std::cout << "Current piece absolute positions: ";
+        for (auto& p : abs) {
+            std::cout << "(" << p.x << "," << p.y << ") ";
+        }
+        std::cout << std::endl;
+
+        */
     }
 }
 
