@@ -25,7 +25,7 @@ const std::array<sf::Color, 7> PIECE_COLORS = {
     sf::Color::Blue        // L = オレンジ
 };
 
-// Piece.cpp に追加
+// Holdデバッグ用
 std::string toString(PieceType t) {
     switch (t) {
     case PieceType::I: return "I";
@@ -40,6 +40,7 @@ std::string toString(PieceType t) {
 }
 
 // ピースの全ブロックの絶対座標を返す
+// これもデバッグ用
 std::array<sf::Vector2i, 4> Piece::getAbsolutePositions() const {
     std::array<sf::Vector2i, 4> abs;
     for (int i = 0; i < 4; i++) {
