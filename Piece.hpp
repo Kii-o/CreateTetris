@@ -34,6 +34,7 @@
 enum class PieceType { T, S, Z, I, O, L, J };
 // 回転状態
 enum class Rotation { Spawn = 0, Right = 1, Reverse = 2, Left = 3 };
+int getKickIndex(Rotation oldRot, Rotation newRot); //ウォールキックテーブルを適応するための関数
 
 // ==== ピース形状と色の定義（実体は .cpp 側で定義） ====
 // それぞれのミノの4マス分の相対座標
@@ -55,6 +56,8 @@ public:
     void drawPreview(sf::RenderWindow& window, int px, int py, int size = 20); // NextやHoldの小さな表示用
     std::array<sf::Vector2i, 4> getAbsolutePositions() const; //現在のブロックの座標を取得する
     bool canMove(Board& board, int dx, int dy); // 指定方向に動けるか判定
+    // 任意のブロック配列で判定する canMove としてオーバーロード
+    bool canMove(Board& board, const std::array<sf::Vector2i, 4>& testBlocks, int dx, int dy);
     void move(int dx, int dy);               // 実際に移動する
     // 右回転なら clockwise = true、左回転なら false
     void rotate(Board& board, bool clockwise);
@@ -84,7 +87,7 @@ private:
     bool holdUsed = false, holdExists = false; // Holdを使ったかどうか、存在するか
 
     sf::Clock fallClock, moveClock;          // 自動落下タイマー、横移動タイマー
-    float fallInterval = 0.5f;               // 自動落下の間隔（秒）
+    float fallInterval = 500.5f;               // 自動落下の間隔（秒）
     float moveInterval = 0.15f;              // 横移動の連続入力の間隔（秒）
 
     PieceType holdPieceType;                 // Hold中のピースの種類
