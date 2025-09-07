@@ -48,6 +48,9 @@ std::array<sf::Vector2i, 4> Piece::getAbsolutePositions() const {
     return abs;
 }
 
+
+
+// ==================== Piece クラス ==================== 
 // コンストラクタ：種類に応じて色と形を設定
 Piece::Piece(PieceType type) {
     this->type = type;
@@ -77,16 +80,6 @@ void Piece::drawPreview(sf::RenderWindow& window, int px, int py, int size) {
     }
 }
 
-// 任意のブロック配列で判定
-bool Piece::canMove(Board& board, const std::array<sf::Vector2i, 4>& testBlocks, int dx, int dy) {
-    for (auto& b : testBlocks) {
-        int nx = x + b.x + dx;
-        int ny = y + b.y + dy;
-        if (board.isOccupied(nx, ny)) return false;
-    }
-    return true;
-}
-
 // 指定した移動量 (dx,dy) で動けるかどうか判定
 bool Piece::canMove(Board& board, int dx, int dy) {
     for (auto& b : blocks) {
@@ -103,6 +96,35 @@ void Piece::move(int dx, int dy) {
 }
 
 // ------------------- ウォールキックテーブル -------------------
+// T, J, L, S, Z 用
+const std::array<std::array<sf::Vector2i, 5>, 8> WALL_KICKS = { {
+    {{ {0,0}, {-1,0}, {-1,-1}, {0,2}, {-1,2} }}, // 0->R
+    {{ {0,0}, {1,0}, {1,1}, {0,-2}, {1,-2} }},     // R->0
+    {{ {0,0}, {1,0}, {1,1}, {0,-2}, {1,-2} }},     // R->2
+    {{ {0,0}, {-1,0}, {-1,-1}, {0,2}, {-1,2} }},  // 2->R
+
+    {{ {0,0}, {1,0}, {1,-1}, {0,2}, {1,2} }},      // 2->L
+    {{ {0,0}, {-1,0}, {-1,1}, {0,-2}, {-1,-2} }},    // L->2
+    {{ {0,0}, {-1,0}, {-1,1}, {0,-2}, {-1,-2} }},    // L->0
+    {{ {0,0}, {1,0}, {1,-1}, {0,2}, {1,2} }}       // 0->L
+
+} };
+
+// Iミノ用
+const std::array<std::array<sf::Vector2i, 5>, 8> WALL_KICKS_I = { {
+    {{ {0,0}, {-2,0}, {1,0}, {-2,1}, {1,-2} }},      // 0->R
+    {{ {0,0}, {2,0}, {-1,0}, {2,-1}, {-1,2} }},      // R->0
+    {{ {0,0}, {-1,0}, {2,0}, {-1,-2}, {2,1} }},      // R->2
+    {{ {0,0}, {1,0}, {-2,-1}, {1,2}, {-2,-1} }},      // 2->R
+
+    {{ {0,0}, {2,0}, {-1,0}, {2,-1}, {-1,2} }},      // 2->L
+    {{ {0,0}, {-2,0}, {1,0}, {-2,1}, {1,-2} }},      // L->2
+    {{ {0,0}, {1,0}, {-2,0}, {1,2}, {-2,-1} }},      // L->0
+    {{ {0,0}, {-1,0}, {2,0}, {-1,-2}, {2,1} }}        // 0->L
+} };
+
+/*
+// // ------------------- ウォールキックテーブル -------------------
 // T, J, L, S, Z 用
 const std::array<std::array<sf::Vector2i, 5>, 8> WALL_KICKS = { {
     {{ {0,0}, {-1,0}, {-1,1}, {0,-2}, {-1,-2} }}, // 0->R
@@ -129,27 +151,11 @@ const std::array<std::array<sf::Vector2i, 5>, 8> WALL_KICKS_I = { {
     {{ {0,0}, {1,0}, {-2,0}, {1,-2}, {-2,1} }},      // L->0
     {{ {0,0}, {-1,0}, {2,0}, {-1,2}, {2,-1} }}        // 0->L
 } };
-
-//上記で定義したテーブルを状況によって適応する関数
-int getKickIndex(Rotation oldRot, Rotation newRot) {
-    if (oldRot == Rotation::Spawn && newRot == Rotation::Right) return 0; // 0->R
-    if (oldRot == Rotation::Right && newRot == Rotation::Spawn) return 1; // R->0
-    if (oldRot == Rotation::Right && newRot == Rotation::Reverse)   return 2; // R->2
-    if (oldRot == Rotation::Reverse && newRot == Rotation::Right) return 3; // 2->R
-    if (oldRot == Rotation::Reverse && newRot == Rotation::Left)  return 4; // 2->L
-    if (oldRot == Rotation::Left && newRot == Rotation::Reverse)   return 5; // L->2
-    if (oldRot == Rotation::Left && newRot == Rotation::Spawn) return 6; // L->0
-    if (oldRot == Rotation::Spawn && newRot == Rotation::Left)  return 7; // 0->L
-
-    return -1; // エラー（通常ここには来ないはず）
-}
+*/
 
 void Piece::rotate(Board& board, bool clockwise) {
     std::array<sf::Vector2i, 4> oldBlocks = blocks;
     Rotation oldRotation = rotation;
-    // --- 新しい回転状態を計算 ---
-    Rotation newRotation = static_cast<Rotation>((static_cast<int>(rotation) + (clockwise ? 1 : 3)) % 4);
-    bool moved = false;
 
     // 回転前の絶対座標を出力
     std::cout << "Before rotation: ";
@@ -158,15 +164,7 @@ void Piece::rotate(Board& board, bool clockwise) {
     }
     std::cout << std::endl;
 
-    // 回転後のブロック座標を計算
-    std::array<sf::Vector2i, 4> rotatedBlocks;
-    for (int i = 0; i < 4; i++) {
-        int x0 = blocks[i].x;
-        int y0 = blocks[i].y;
-        rotatedBlocks[i] = clockwise ? sf::Vector2i(-y0, x0) : sf::Vector2i(y0, -x0);
-    }
-
-    // --- ブロックの回転処理 ---
+    // 回転
     for (auto& b : blocks) {
         int tmp = b.x;
         if (clockwise) {
@@ -179,32 +177,25 @@ void Piece::rotate(Board& board, bool clockwise) {
         }
     }
 
-    // --- ウォールキック処理 ---
-    int kickIndex = getKickIndex(oldRotation, newRotation);
-    // 値が取れているかの確認のため、デバッグ
-    std::cout << "得られた値: " << kickIndex << std::endl;
-    const auto& kicks = (type == PieceType::I) ? WALL_KICKS_I : WALL_KICKS;
+    // 次の回転状態を計算
+    Rotation newRotation = static_cast<Rotation>((static_cast<int>(rotation) + (clockwise ? 1 : 3)) % 4);
 
-    if (kickIndex >= 0) {
-        for (const auto& offset : kicks[kickIndex]) {
-            if (canMove(board, rotatedBlocks, offset.x, offset.y)) {
-                x += offset.x;
-                y += offset.y;
-                std::cout << "Testing kickIndex=" << kickIndex << " ";
-                for (const auto& offset : kicks[kickIndex]) {
-                    std::cout << "(" << offset.x << "," << offset.y << ") ";
-                }
-                rotation = newRotation; // ← 成功したので回転確定
-                moved = true;
-                break;
-            }
+    // ウォールキック適用
+    const auto& kicks = (type == PieceType::I) ? WALL_KICKS_I : WALL_KICKS;
+    bool moved = false;
+    for (const auto& offset : kicks[static_cast<int>(newRotation)]) {
+        if (canMove(board, offset.x, offset.y)) {
+            x += offset.x;
+            y += offset.y;
+            moved = true;
+            break;
         }
     }
 
-    // --- 全部失敗したら元に戻す ---
     if (!moved) {
+        // 全て失敗したら元に戻す
         blocks = oldBlocks;
-        rotation = oldRotation;
+        newRotation = oldRotation;
     }
 
     // 回転後の絶対座標を出力
@@ -215,47 +206,7 @@ void Piece::rotate(Board& board, bool clockwise) {
     std::cout << std::endl;
 }
 
-/*
-void Piece::rotate(Board& board, bool clockwise) {
-    Rotation oldRotation = rotation;
-    Rotation newRotation = static_cast<Rotation>((static_cast<int>(rotation) + (clockwise ? 1 : 3)) % 4);
 
-    // 回転後のブロック座標を計算
-    std::array<sf::Vector2i, 4> rotatedBlocks;
-    for (int i = 0; i < 4; i++) {
-        int x0 = blocks[i].x;
-        int y0 = blocks[i].y;
-        rotatedBlocks[i] = clockwise ? sf::Vector2i(-y0, x0) : sf::Vector2i(y0, -x0);
-    }
-
-    int kickIndex = getKickIndex(oldRotation, newRotation);
-    const auto& kicks = (type == PieceType::I) ? WALL_KICKS_I : WALL_KICKS;
-
-    bool moved = false;
-    if (kickIndex >= 0) {
-        for (const auto& offset : kicks[kickIndex]) {
-            bool can = true;
-            for (auto& b : rotatedBlocks) {
-                int nx = x + b.x + offset.x;
-                int ny = y + b.y + offset.y;
-                if (board.isOccupied(nx, ny)) { can = false; break; }
-            }
-            if (can) {
-                x += offset.x;
-                y += offset.y;
-                blocks = rotatedBlocks;  // 回転確定
-                rotation = newRotation;
-                moved = true;
-                break;
-            }
-        }
-    }
-
-    if (!moved) {
-        // 回転失敗 → 何もしない（blocksは元のまま）
-    }
-}
-*/
 
 
 // ピースを盤面に固定
