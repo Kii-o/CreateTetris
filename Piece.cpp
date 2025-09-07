@@ -111,6 +111,7 @@ void Piece::move(int dx, int dy) {
     y += dy;
 }
 
+/*
 // ------------------- ウォールキックテーブル -------------------
 // T, J, L, S, Z 用
 const std::array<std::array<sf::Vector2i, 5>, 8> WALL_KICKS = { {
@@ -138,8 +139,8 @@ const std::array<std::array<sf::Vector2i, 5>, 8> WALL_KICKS_I = { {
     {{ {0,0}, {1,0}, {-2,0}, {1,2}, {-2,-1} }},      // L->0
     {{ {0,0}, {-1,0}, {2,0}, {-1,-2}, {2,1} }}        // 0->L
 } };
+*/
 
-/*
 // // ------------------- ウォールキックテーブル -------------------
 // T, J, L, S, Z 用
 const std::array<std::array<sf::Vector2i, 5>, 8> WALL_KICKS = { {
@@ -167,7 +168,6 @@ const std::array<std::array<sf::Vector2i, 5>, 8> WALL_KICKS_I = { {
     {{ {0,0}, {1,0}, {-2,0}, {1,-2}, {-2,1} }},      // L->0
     {{ {0,0}, {-1,0}, {2,0}, {-1,2}, {2,-1} }}        // 0->L
 } };
-*/
 
 //ウォールキックテーブルからどの値を適応するかを返す関数
 int getKickIndex(Rotation oldRot, Rotation newRot) {
