@@ -8,7 +8,7 @@ const std::array<std::array<sf::Vector2i, 4>, 7> PIECE_SHAPES = { {
     { sf::Vector2i(0,0), sf::Vector2i(-1,0), sf::Vector2i(1,0), sf::Vector2i(0,1) }, // Tミノ 
     { sf::Vector2i(0,0), sf::Vector2i(1,0), sf::Vector2i(0,1), sf::Vector2i(-1,1) }, // Sミノ
     { sf::Vector2i(0,0), sf::Vector2i(-1,0), sf::Vector2i(0,1), sf::Vector2i(1,1) }, // Zミノ
-    { sf::Vector2i(0,0), sf::Vector2i(-1,0), sf::Vector2i(1,0), sf::Vector2i(2,0) }, // Iミノ
+    { sf::Vector2i(-1,0), sf::Vector2i(0,0), sf::Vector2i(1,0), sf::Vector2i(2,0) }, // Iミノ
     { sf::Vector2i(0,0), sf::Vector2i(1,0), sf::Vector2i(0,1), sf::Vector2i(1,1) },  // Oミノ
     { sf::Vector2i(0,0), sf::Vector2i(-1,0), sf::Vector2i(-1,1), sf::Vector2i(1,0) },// Jミノ
     { sf::Vector2i(0,0), sf::Vector2i(-1,0), sf::Vector2i(1,0), sf::Vector2i(1,1) }  // Lミノ
@@ -97,12 +97,12 @@ bool Piece::canMove(Board& board, int dx, int dy) {
 */
 
 // 指定した移動量 (dx,dy) で動けるかどうか判定
-bool Piece::canMove(Board& board, int dx, int dy) { 
-    for (auto& b : blocks) { 
-        int nx = x + b.x + dx, ny = y + b.y + dy; 
+bool Piece::canMove(Board& board, int dx, int dy) {
+    for (auto& b : blocks) {
+        int nx = x + b.x + dx, ny = y + b.y + dy;
         if (board.isOccupied(nx, ny)) return false; // 盤面外またはブロック衝突 
-    } 
-        return true; 
+    }
+    return true;
 }
 
 // 実際にピースを移動する
@@ -331,9 +331,13 @@ void Piece::rotate(Board& board, bool clockwise) {
 
 // ピースを盤面に固定
 void Piece::place(Board& board) {
-    for (auto& b : blocks)
-        board.placeBlock(x + b.x, y + b.y, color);
+    for (auto& p : getAbsolutePositions()) {
+        if (p.y >= 0) { // フィールド内チェック
+            board.grid[p.y][p.x] = Block(true, color);
+        }
+    }
 }
+
 
 // ==================== Bag クラス ==================== 
 // コンストラクタ：乱数生成器を初期化し、バッグをシャッフル
@@ -430,6 +434,9 @@ void Game::handleInput() {
         currentPiece.place(board);     // 盤面に固定
         // 次のピース生成などの処理
         currentPiece = Piece(nextQueue.front());
+        //ライン消去
+        int lines = board.clearLines();
+        //ネクストを1つ削除、新しく追加、ホールド機能を使えるようにする
         nextQueue.pop_front();
         nextQueue.push_back(bag.getNext());
         holdUsed = false;
