@@ -1,4 +1,5 @@
 #include "Board.hpp" 
+#include <iostream>
 
 // Blockクラスのコンストラクタ
 Block::Block(bool f, sf::Color c) : filled(f), color(c) {}
@@ -43,8 +44,12 @@ void Board::placeBlock(int x, int y, sf::Color color) {
 
 // 揃ったラインを削除し、削除した行数を返す
 int Board::clearLines() {
+    //関数が呼び出されているかの確認
+    //std::cout << "[DEBUG] clearLines() called\n";
     int linesCleared = 0;
     for (int y = HEIGHT - 1; y >= 0; --y) {
+        //ライン消去デバッグ
+        //std::cout << "Row " << y << ": "<<std::endl;
         bool full = true;
         // 1行がすべて埋まっているか確認
         for (int x = 0; x < WIDTH; ++x)
