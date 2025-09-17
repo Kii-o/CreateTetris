@@ -280,8 +280,6 @@ void Piece::rotate(Board& board, bool clockwise) {
     }
     std::cout << std::endl;
 }
-
-Citrusさん返信待ち
 */
 
 
