@@ -57,7 +57,7 @@ public:
     std::array<sf::Vector2i, 4> getAbsolutePositions() const; //現在のブロックの座標を取得する
     bool canMove(Board& board, int dx, int dy); // 指定方向に動けるか判定
     // 任意のブロック配列で判定する canMove としてオーバーロード
-    bool canMove(Board& board, const std::array<sf::Vector2i, 4>& testBlocks, int dx, int dy);
+    //bool canMove(Board& board, const std::array<sf::Vector2i, 4>& testBlocks, int dx, int dy);
     void move(int dx, int dy);               // 実際に移動する
     // 右回転なら clockwise = true、左回転なら false
     void rotate(Board& board, bool clockwise);
